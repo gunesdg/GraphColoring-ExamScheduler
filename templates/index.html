@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ders & Sınav Çizelgeleme Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ══════════════════ ÜST PANEL ══════════════════ -->
+<header class="top-bar">
+  <div class="top-left">
+    <div class="app-title">
+      <span class="title-icon">⬡</span>
+      <span>Çizelgeleme Sistemi</span>
+    </div>
+    <div class="mode-toggle">
+      <span class="mode-label" id="lbl-ders">Ders Programı</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="mode-toggle">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="mode-label" id="lbl-sinav">Sınav Programı</span>
+    </div>
+  </div>
+
+  <div class="top-stats">
+    <div class="stat-chip">
+      <span class="stat-label">Kroma tik Sayı</span>
+      <span class="stat-value accent" id="stat-chromatic">–</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Alt Sınır</span>
+      <span class="stat-value" id="stat-lower">–</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Düğüm (Nodes)</span>
+      <span class="stat-value" id="stat-nodes">–</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Kenar (Edges)</span>
+      <span class="stat-value" id="stat-edges">–</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">Çakışma</span>
+      <span class="stat-value danger" id="stat-conflicts">–</span>
+    </div>
+  </div>
+
+  <div class="top-actions">
+    <select id="algo-select" class="algo-select">
+      <option value="dsatur">DSATUR</option>
+      <option value="greedy">Greedy</option>
+    </select>
+    <button class="btn-primary" id="btn-generate">
+      <span>▶</span> Program Oluştur
+    </button>
+    <button class="btn-save-pdf" id="btn-save-pdf" disabled title="Önce Program Oluştur">
+      <span>⬇</span> Programı Kaydet
+    </button>
+  </div>
+</header>
+
+<!-- ══════════════════ ANA LAYOUT ══════════════════ -->
+<main class="main-layout">
+
+  <!-- ── SOL PANEL ── -->
+  <aside class="left-panel">
+    <div class="panel-section">
+      <div class="section-title">VERİ GİRİŞİ</div>
+
+      <div class="form-group">
+        <label class="form-label">Öğrenci Seçimi</label>
+        <select id="student-select" class="form-control">
+          <option value="">— Öğrenci Seçin —</option>
+        </select>
+      </div>
+
+      <!-- OBS Kayıt Özeti -->
+      <div id="reg-failed-alert" class="reg-failed-alert"></div>
+      <div id="reg-summary" class="registration-summary"></div>
+
+      <div class="form-group">
+        <label class="form-label">Ders Listesi
+          <span class="akts-badge" id="akts-badge">0 AKTS</span>
+        </label>
+        <div class="course-list-actions">
+          <button class="btn-list-action" id="btn-select-all">✓ Tümünü Seç</button>
+          <button class="btn-list-action danger" id="btn-clear-courses">✕ Sıfırla</button>
+        </div>
+        <div id="course-list" class="course-list">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+
+      <div class="akts-display" id="akts-display">
+        <div class="akts-bar-track">
+          <div class="akts-bar-fill" id="akts-bar"></div>
+        </div>
+        <div class="akts-info">
+          <span>AKTS Toplamı: <strong id="akts-total">0</strong></span>
+          <span class="akts-limit">/30</span>
+        </div>
+        <div id="akts-warning" class="hidden"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title-row">
+        <span class="section-title">HOCA ATAMA</span>
+        <button class="btn-list-action danger" id="btn-reset-instructors" title="Tüm hoca atamalarını sıfırla">↺ Sıfırla</button>
+      </div>
+      <div id="instructor-assign-list">
+        <!-- JS ile doldurulur -->
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">DERSLİK KAPASİTELERİ</div>
+      <div id="classroom-list" class="classroom-list">
+        <!-- JS ile doldurulur -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── ORTA PANEL ── -->
+  <section class="center-panel">
+    <div class="center-header">
+      <div class="section-title">GRAF GÖRÜNÜMÜ</div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="conflict">ÇAKIŞMA GRAFİ</button>
+        <button class="tab-btn" data-tab="bipartite">BİPARTİT GRAF</button>
+        <button class="tab-btn" data-tab="student">ÖĞRENCİYE ÖZEL</button>
+      </div>
+    </div>
+
+    <!-- Çakışma Grafı -->
+    <div class="tab-content active" id="tab-conflict">
+      <div id="conflict-graph-container" class="graph-container">
+        <div class="graph-placeholder">
+          <div class="placeholder-icon">⬡</div>
+          <div class="placeholder-text">Graf yükleniyor...</div>
+        </div>
+      </div>
+      <div class="graph-legend" id="conflict-legend"></div>
+    </div>
+
+    <!-- Bipartit Graf -->
+    <div class="tab-content" id="tab-bipartite">
+      <div id="bipartite-graph-container" class="graph-container">
+        <div class="graph-placeholder">
+          <div class="placeholder-icon">⬡</div>
+          <div class="placeholder-text">Bipartit graf yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Öğrenciye Özel Graf -->
+    <div class="tab-content" id="tab-student">
+      <div id="student-graph-container" class="graph-container">
+        <div class="graph-placeholder">
+          <div class="placeholder-icon">👤</div>
+          <div class="placeholder-text">Öğrenci seçin...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simülasyon Paneli -->
+    <div class="simulation-panel">
+      <div class="sim-header">
+        <span class="section-title">SİMÜLASYON MODU</span>
+        <div class="sim-controls">
+          <button class="btn-sim" id="btn-sim-start">▶ Başlat</button>
+          <button class="btn-sim" id="btn-sim-step" disabled>⏭ Adım</button>
+          <button class="btn-sim" id="btn-sim-reset">↺ Sıfırla</button>
+          <span class="sim-speed-label">Hız:</span>
+          <input type="range" id="sim-speed" min="200" max="2000" value="800" step="200">
+        </div>
+      </div>
+      <div class="graph-ctrl-bar">
+        <button class="btn-graph-ctrl" id="btn-freeze">❄ Grafı Sabitle</button>
+        <button class="btn-graph-ctrl soft" id="btn-soft-reset">🔄 Sıfırla</button>
+        <button class="btn-graph-ctrl hard" id="btn-hard-reset">⚠ Yeniden Başlat</button>
+      </div>
+      <div id="sim-log" class="sim-log">
+        <div class="sim-log-empty">Program oluştur ve simülasyonu başlat...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SAĞ PANEL ── -->
+  <aside class="right-panel">
+    <div class="section-title">ÇÖZÜM GÖSTERİMİ</div>
+
+    <!-- Program Grid -->
+    <div id="schedule-container" class="schedule-container">
+      <div class="schedule-placeholder">Program oluşturmak için "Program Oluştur" butonuna tıklayın.</div>
+    </div>
+
+    <!-- Matematiksel Bilgiler -->
+    <div class="math-panel">
+      <div class="section-title">MATEMATİKSEL BİLGİLER</div>
+      <div class="math-info" id="math-info">
+        <div class="math-row">
+          <span class="math-label">Algoritma</span>
+          <span class="math-val" id="math-algo">–</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Kroma tik Sayı χ(G)</span>
+          <span class="math-val accent" id="math-chromatic">–</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Alt Sınır ω(G)</span>
+          <span class="math-val" id="math-lower">–</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Toplam Düğüm |V|</span>
+          <span class="math-val" id="math-nodes">–</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Toplam Kenar |E|</span>
+          <span class="math-val" id="math-edges">–</span>
+        </div>
+      </div>
+
+      <!-- Algoritma Karşılaştırma -->
+      <div class="algo-compare" id="algo-compare" style="display:none">
+        <div class="section-title" style="margin-top:10px">ALGORİTMA KARŞILAŞTIRMA</div>
+        <div class="compare-row">
+          <div class="compare-algo">
+            <span class="compare-label">Greedy</span>
+            <span class="compare-val" id="cmp-greedy">–</span>
+            <span class="compare-sub">slot</span>
+          </div>
+          <div class="compare-vs">vs</div>
+          <div class="compare-algo">
+            <span class="compare-label">DSATUR</span>
+            <span class="compare-val" id="cmp-dsatur">–</span>
+            <span class="compare-sub">slot</span>
+          </div>
+        </div>
+        <div class="compare-result" id="cmp-result"></div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<!-- ══════════════════ ALT PANEL ══════════════════ -->
+<footer class="bottom-panel">
+  <div class="warnings-header">
+    <span class="section-title">AKTİF UYARILAR</span>
+    <span id="warning-count" class="warning-badge">0</span>
+  </div>
+  <div id="warnings-list" class="warnings-list">
+    <div class="no-warnings">Sistem kontrol ediliyor...</div>
+  </div>
+</footer>
+
+<!-- ══════════════════ TOOLTIP ══════════════════ -->
+<div id="tooltip" class="tooltip hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/pdf_export.js"></script>
+</body>
+</html>
