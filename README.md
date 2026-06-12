@@ -1,36 +1,28 @@
-# Ders & Sınav Çizelgeleme Sistemi
+# 🗓️ Ders & Sınav Çizelgeleme Sistemi
 
-Graf teorisi tabanlı üniversite ders ve sınav programı oluşturma sistemi.
+Graf teorisi tabanlı, yapay zeka destekli üniversite ders ve sınav programı oluşturma sistemi.
 
-## Özellikler
+## 🚀 Özellikler
 
-- **Graph Coloring** (Greedy + DSATUR) ile çakışmasız zaman slotu atama
-- **Bipartite Matching** ile derslik kapasitesi kısıtlı eşleştirme
-- **D3.js** ile interaktif graf görselleştirme
-- **Simülasyon modu** ile adım adım renklendirme animasyonu
-- Ders Programı + Sınav Programı modları
-- AKTS kısıtı, hoca/öğrenci/derslik çakışma kontrolü
+* **Graph Coloring (Greedy + DSATUR):** Sıfır çakışmalı zaman slotu atama algoritması.
+* **Bipartite Matching:** Derslik kapasitesi kısıtlı ve optimize edilmiş eşleştirme.
+* **D3.js Görselleştirme:** Etkileşimli ve dinamik graf ağ yapısı.
+* **Simülasyon Modu:** Adım adım graf renklendirme animasyonu.
+* **Çift Mod Desteği:** Hem Dönem içi Ders Programı hem de Sınav Programı modları.
+* **Gelişmiş Kısıt Yönetimi:** AKTS kısıtı, hoca/öğrenci/derslik çakışma kontrolleri.
 
-## Kurulum
+---
+
+## 🛠️ Kurulum
+
+Uygulamayı yerel bilgisayarınızda çalıştırmak için aşağıdaki adımları takip edin:
 
 ```bash
+# Proje dizinine geçiş yapın
 cd cizelgeleme
+
+# Gerekli kütüphaneleri yükleyin
 pip install flask --break-system-packages
+
+# Uygulamayı başlatın
 python app.py
-```
-
-Tarayıcıda: http://localhost:5000
-
-## Kullanım
-
-1. **Program Oluştur** → Graf renklendirme çalışır, program oluşturulur
-2. **Öğrenci Seç** → Kişiye özel alt graf görünümü
-3. **Simülasyon Başlat** → Adım adım renklendirme izle
-4. Tab'lar: Çakışma Grafı / Bipartit Graf / Öğrenciye Özel
-
-## Matematiksel Model
-
-- **V** = Dersler kümesi (nodes)
-- **E** = Çakışma kenarları (ortak öğrenci / hoca / derslik)
-- **χ(G)** = Kroma tik sayı = Minimum zaman slotu
-- **DSATUR** = Saturation degree öncelikli renklendirme
